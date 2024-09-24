@@ -192,7 +192,14 @@ gpgpu_sim *gpgpu_ptx_sim_init_perf()
    // This is printed once per execution of simulator
    print_splash();
 
+   /* Reads environment variables:
+        Check the simulation mode(functional/performance)
+        Debugger(enabled/disabled)
+        Detailed logging or not
+        Per thread logging by thread id
+        Per instruction logging by PC */
    read_sim_environment_variables();
+
    read_parser_environment_variables();
    option_parser_t opp = option_parser_create();
 

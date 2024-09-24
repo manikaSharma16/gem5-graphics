@@ -26,27 +26,6 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-/*
-print_splash(): display a splash message when the GPGPU-Sim simulator starts.
-   Splash Message: 
-   static int splash_printed=0;: This variable keeps track of whether the splash message has already been printed.
-   if ( !splash_printed ): The function checks if the splash message has already been printed. If splash_printed is 0, it means the message has not been shown yet.
-Extracting Build Number:
-
-unsigned build=0;: Initializes a variable to hold the build number.
-sscanf(g_gpgpusim_build_string, "$Change"": %u $", &build);: This line uses sscanf to parse the global variable g_gpgpusim_build_string, extracting the build number from it. It expects the build string to follow a specific format (e.g., "$Change": <build_number> $).
-Printing the Splash Message:
-
-fprintf(stdout, "\n\n *** %s [build %u] ***\n\n\n", g_gpgpusim_version_string, build );: If the splash message has not been printed yet, it prints the version of the simulator (from g_gpgpusim_version_string) along with the extracted build number.
-Update Splash Printed Flag:
-
-splash_printed=1;: After printing the message, the function sets splash_printed to 1, preventing the splash message from being printed again in future calls.
-Summary of Flow
-The function checks if it has already displayed the splash message.
-If not, it extracts the build number from a global string and prints the version and build information.
-It ensures the splash message is only printed once per execution of the simulator.
-This function serves to provide users with immediate feedback about the version and build of the simulator they are running, which can be useful for debugging and support.
-*/
 #include "gpu/gpgpu-sim/cuda_gpu.hh"
 
 #include "cuda-sim.h"
@@ -1796,7 +1775,7 @@ void print_splash() // Print a welcome message that includes the version of the 
       unsigned build=0; // Variable to hold the build number
 
       // Parse the global variable g_gpgpusim_build_string, extracting the build number from it
-      sscanf(g_gpgpusim_build_string, "$Change"": %u $", &build); 
+      sscanf(g_gpgpusim_build_string, "$Change"": %u $", &build);
       
       // Prints the version of the simulator (from g_gpgpusim_version_string) along with the extracted build number.
       fprintf(stdout, "\n\n        *** %s [build %u] ***\n\n\n", g_gpgpusim_version_string, build ); 
@@ -1926,41 +1905,59 @@ extern int ptx_debug;
 
 bool g_cuda_launch_blocking = false;
 
+/* Checks for several environment variables that control the simulator's behavior, modifying global variables as needed
+   Using environment variables, prints relevant information about the configuration
+   This information is useful for debugging and performance tuning, enables users to understand how the simulator is set up */
 void read_sim_environment_variables() 
 {
+   // The function starts by resetting some global variables to their default values
    ptx_debug = 0;
    g_debug_execution = 0;
    g_interactive_debugger_enabled = false;
 
+   // ------------ Reading the simulation mode: functional simulation or detailed performance ----------- //
    char *mode = getenv("PTX_SIM_MODE_FUNC");
-   if ( mode )
-      sscanf(mode,"%u", &g_ptx_sim_mode);
+   if ( mode ) // If environment variable PTX_SIM_MODE_FUNC is found, read g_ptx_sim_mode
+      sscanf(mode,"%u", &g_ptx_sim_mode); 
+   // It prints the current simulation mode to the console
    printf("GPGPU-Sim PTX: simulation mode %d (can change with PTX_SIM_MODE_FUNC environment variable:\n", g_ptx_sim_mode);
    printf("               1=functional simulation only, 0=detailed performance simulator)\n");
+   // ------------------------------------------------------------------------------ //
+
+   // ------------ Interactive debugger enable or disable ----------- //
    char *dbg_inter = getenv("GPGPUSIM_DEBUG");
-   if ( dbg_inter && strlen(dbg_inter) ) {
+   if ( dbg_inter && strlen(dbg_inter) ) { // If environment variable GPGPUSIM_DEBUG is found and is non-empty
       printf("GPGPU-Sim PTX: enabling interactive debugger\n");
       fflush(stdout);
-      g_interactive_debugger_enabled = true;
+      g_interactive_debugger_enabled = true; // Then enable the interactive debugger
    }
+   // ------------------------------------------------------------------------------ //
+
+   // ------------ Debug level and detailed logging ----------- //
    char *dbg_level = getenv("PTX_SIM_DEBUG");
-   if ( dbg_level && strlen(dbg_level) ) {
+   if ( dbg_level && strlen(dbg_level) ) { // If environment variable PTX_SIM_DEBUG is found and is non-empty
       printf("GPGPU-Sim PTX: setting debug level to %s\n", dbg_level );
       fflush(stdout);
-      sscanf(dbg_level,"%d", &g_debug_execution);
+      sscanf(dbg_level,"%d", &g_debug_execution); // Reads the debug level into g_debug_execution, allowing for detailed logging during simulation.
    }
+   // ------------------------------------------------------------------------------ //
+
+   // ------------ Debug specific thread ----------- //
    char *dbg_thread = getenv("PTX_SIM_DEBUG_THREAD_UID");
-   if ( dbg_thread && strlen(dbg_thread) ) {
+   if ( dbg_thread && strlen(dbg_thread) ) { // If environment variable PTX_SIM_DEBUG_THREAD_UID is found and is non-empty
       printf("GPGPU-Sim PTX: printing debug information for thread uid %s\n", dbg_thread );
       fflush(stdout);
-      sscanf(dbg_thread,"%d", &g_debug_thread_uid);
+      sscanf(dbg_thread,"%d", &g_debug_thread_uid); // Reads the thread ID for which to print debug information
    }
+  
+   // ------------ Debug specific instruction ----------- //
    char *dbg_pc = getenv("PTX_SIM_DEBUG_PC");
-   if ( dbg_pc && strlen(dbg_pc) ) {
+   if ( dbg_pc && strlen(dbg_pc) ) { // If environment variable PTX_SIM_DEBUG_PC is found and is non-empty
       printf("GPGPU-Sim PTX: printing debug information for instruction with PC = %s\n", dbg_pc );
-      fflush(stdout);
-      sscanf(dbg_pc,"%d", &g_debug_pc);
+      fflush(stdout); 
+      sscanf(dbg_pc,"%d", &g_debug_pc); // Reads the specific instruction based on its program counter (PC) for which to print debug information
    }
+   // ------------------------------------------------------------------------------ //
 
 #if CUDART_VERSION > 1010
     g_override_embedded_ptx = false;
