@@ -27,6 +27,24 @@
 
 /*
 Comments author: Manika
+
+Flow of code:
+
+1. Initialization Phase: The simulator initializes configurations and creates the necessary objects for simulation.
+
+    1.1: Define global variables, structures
+    1.2: Initialization Functions: 
+        1.2.1: gpgpu_ptx_sim_init_perf(): Initializes the performance simulation environment for GPU.
+                Flow:
+                    1.2.1.1: Seeds the random number generator
+                    1.2.1.2: Print version and build number of simulator(Once per execution of simulator)
+                    1.2.1.2: Reads environment variables and initializes the option parser.
+                    1.2.1.3: Registers various GPU options and parses command line arguments.
+                    1.2.1.4: Initializes GPU configuration(g_the_gpu_config) and creates a new instance of gpgpu_sim and stream_manager.
+                    1.2.1.5: Records the start time of the simulation.
+        1.2.2: gem5_ptx_sim_init_perf(): Initializes the performance simulation environment for CPU.
+                Flow:
+                    1.2.2.1: Returns a pointer to the initialized stream manager.
 */
 
 #include "gpgpusim_entrypoint.h"
@@ -169,7 +187,11 @@ extern bool g_cuda_launch_blocking;
 gpgpu_sim *gpgpu_ptx_sim_init_perf()
 {
    srand(1);
+
+   // Reads and prints version of simulator and the build number into variable g_gpgpusim_build_string from command line
+   // This is printed once per execution of simulator
    print_splash();
+
    read_sim_environment_variables();
    read_parser_environment_variables();
    option_parser_t opp = option_parser_create();

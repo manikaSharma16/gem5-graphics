@@ -26,6 +26,27 @@
 // OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+/*
+print_splash(): display a splash message when the GPGPU-Sim simulator starts.
+   Splash Message: 
+   static int splash_printed=0;: This variable keeps track of whether the splash message has already been printed.
+   if ( !splash_printed ): The function checks if the splash message has already been printed. If splash_printed is 0, it means the message has not been shown yet.
+Extracting Build Number:
+
+unsigned build=0;: Initializes a variable to hold the build number.
+sscanf(g_gpgpusim_build_string, "$Change"": %u $", &build);: This line uses sscanf to parse the global variable g_gpgpusim_build_string, extracting the build number from it. It expects the build string to follow a specific format (e.g., "$Change": <build_number> $).
+Printing the Splash Message:
+
+fprintf(stdout, "\n\n *** %s [build %u] ***\n\n\n", g_gpgpusim_version_string, build );: If the splash message has not been printed yet, it prints the version of the simulator (from g_gpgpusim_version_string) along with the extracted build number.
+Update Splash Printed Flag:
+
+splash_printed=1;: After printing the message, the function sets splash_printed to 1, preventing the splash message from being printed again in future calls.
+Summary of Flow
+The function checks if it has already displayed the splash message.
+If not, it extracts the build number from a global string and prints the version and build information.
+It ensures the splash message is only printed once per execution of the simulator.
+This function serves to provide users with immediate feedback about the version and build of the simulator they are running, which can be useful for debugging and support.
+*/
 #include "gpu/gpgpu-sim/cuda_gpu.hh"
 
 #include "cuda-sim.h"
@@ -1768,14 +1789,19 @@ kernel_info_t *gpgpu_opencl_ptx_sim_init_grid(class function_info *entry,
 
 #include "../version"
 
-void print_splash()
+void print_splash() // Print a welcome message that includes the version of the simulator and the build number
 {
-   static int splash_printed=0;
-   if ( !splash_printed ) {
-      unsigned build=0;
-      sscanf(g_gpgpusim_build_string, "$Change"": %u $", &build);
-      fprintf(stdout, "\n\n        *** %s [build %u] ***\n\n\n", g_gpgpusim_version_string, build );
-      splash_printed=1;
+   static int splash_printed=0; // Keeps track of whether the splash message has already been printed
+   if ( !splash_printed ) { // If the splash message has not been printed
+      unsigned build=0; // Variable to hold the build number
+
+      // Parse the global variable g_gpgpusim_build_string, extracting the build number from it
+      sscanf(g_gpgpusim_build_string, "$Change"": %u $", &build); 
+      
+      // Prints the version of the simulator (from g_gpgpusim_version_string) along with the extracted build number.
+      fprintf(stdout, "\n\n        *** %s [build %u] ***\n\n\n", g_gpgpusim_version_string, build ); 
+      
+      splash_printed=1; // Preventing the splash message from being printed again in future calls
    }
 }
 
