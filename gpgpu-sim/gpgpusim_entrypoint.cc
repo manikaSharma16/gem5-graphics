@@ -200,7 +200,9 @@ gpgpu_sim *gpgpu_ptx_sim_init_perf()
         Per instruction logging by PC */
    read_sim_environment_variables();
 
+   // If the debug level is more than 30, enable detailed debugging of GPGPU-Sim Intermediate representation code
    read_parser_environment_variables();
+
    option_parser_t opp = option_parser_create();
 
    icnt_reg_options(opp);
